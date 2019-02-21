@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #include "model.h"
 #include "tga.h"
 
@@ -18,6 +19,16 @@ void line (tgaImage *image,
            int x0, int y0,
            int x1, int y1,
            tgaColor color);
+
+Model *scaleModel(Model *model, double scale) {
+    for(unsigned i = 0; i < model->nvert; i++) {
+        for(unsigned j = 0; j < 3; j++) {
+            (model->vertices[i])[j] = (model->vertices[i])[j] * scale;
+        }
+    }
+
+    return model;
+}
 
 void meshgrid(tgaImage *image, Model *model) {
     tgaColor white = tgaRGB(255, 255, 255);
@@ -48,6 +59,10 @@ int main(int argc, char **argv)
 
     tgaImage *image = tgaNewImage(HEIGHT, WIDTH, RGB);
     Model *model = loadFromObj(argv[1]);
+
+    if(argc > 3) {
+        scaleModel(model, strtod(argv[3], NULL));
+    }
 
     meshgrid(image, model);
 
