@@ -104,11 +104,10 @@ void BRLine(tgaImage *image,
         swap(&y0, &y1);
     }
 
-    double threshold = 0.5; // for transition between pixels
-    double dx = x1 - x0;
-    double dy = y1 - y0;
-    double dError = fabs(dy)/dx;
-    double error = 0;
+    int dx = x1 - x0;
+    int dy = y1 - y0;
+    int dError = 2*iabs(dy);
+    int error = 0;
     unsigned x, y;
     for (x = x0, y = y0; x <= x1; ++x) {
         if(steep) {
@@ -117,9 +116,9 @@ void BRLine(tgaImage *image,
             tgaSetPixel(image, (unsigned int)x, (unsigned int)y, color);
         }
         error += dError;
-        if(error > threshold) {
+        if(error > dx) {
             y += sign(dy);
-            error -= 1;
+            error -= 2*dx;
         }
     }
 }
