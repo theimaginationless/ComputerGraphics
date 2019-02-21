@@ -30,6 +30,16 @@ Model *scaleModel(Model *model, double scale) {
     return model;
 }
 
+Model *offsetModel(Model *model, double x, double y, double z) {
+    for(unsigned i = 0; i < model->nvert; i++) {
+        (model->vertices[i])[0] += x;
+        (model->vertices[i])[1] += y;
+        (model->vertices[i])[2] += z;
+    }
+
+    return model;
+}
+
 void meshgrid(tgaImage *image, Model *model) {
     tgaColor white = tgaRGB(255, 255, 255);
 
@@ -59,9 +69,10 @@ int main(int argc, char **argv)
 
     tgaImage *image = tgaNewImage(HEIGHT, WIDTH, RGB);
     Model *model = loadFromObj(argv[1]);
-
-    if(argc > 3) {
+    printf("%d \n", argc);
+    if(argc > 6) {
         scaleModel(model, strtod(argv[3], NULL));
+        model = offsetModel(model, strtod(argv[4], NULL), strtod(argv[5], NULL), strtod(argv[6], NULL));
     }
 
     meshgrid(image, model);
