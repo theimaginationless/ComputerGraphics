@@ -3,6 +3,9 @@
 #include "model.h"
 #include "tga.h"
 
+#define WIDTH 800
+#define HEIGHT 800
+
 void swap(int *a, int *b);
 int iabs(int a);
 
@@ -25,7 +28,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    tgaImage *image = tgaNewImage(100, 100, RGB);
+    tgaImage *image = tgaNewImage(HEIGHT, WIDTH, RGB);
     Model *model = loadFromObj(argv[1]);
 
     if (-1 == tgaSaveToFile(image, argv[2])) {
