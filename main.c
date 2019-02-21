@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 
     tgaImage *image = tgaNewImage(HEIGHT, WIDTH, RGB);
     Model *model = loadFromObj(argv[1]);
-    printf("%d \n", argc);
+    
     if(argc > 6) {
         scaleModel(model, strtod(argv[3], NULL));
         model = offsetModel(model, strtod(argv[4], NULL), strtod(argv[5], NULL), strtod(argv[6], NULL));
