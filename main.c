@@ -9,13 +9,14 @@
 
 void swap(int *a, int *b);
 int iabs(int a);
+int sign(double x);
 
 /*
-* Using Digital Differential Analyzer algorihm
+* Using Bresenham's algorithm
 * to draw interval connecting (x0, y0) with (x1, y1)
 * on image using color
 */
-void line (tgaImage *image, 
+void BRLine (tgaImage *image, 
            int x0, int y0,
            int x1, int y1,
            tgaColor color);
@@ -52,7 +53,7 @@ void meshgrid(tgaImage *image, Model *model) {
         }
 
         for (unsigned j = 0; j < 3; ++j) {
-            line(image, screen_coords[j][0],screen_coords[j][1],
+            BRLine(image, screen_coords[j][0],screen_coords[j][1],
                 screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1],white);
         }
     }
@@ -69,7 +70,7 @@ int main(int argc, char **argv)
 
     tgaImage *image = tgaNewImage(HEIGHT, WIDTH, RGB);
     Model *model = loadFromObj(argv[1]);
-    
+
     if(argc > 6) {
         scaleModel(model, strtod(argv[3], NULL));
         model = offsetModel(model, strtod(argv[4], NULL), strtod(argv[5], NULL), strtod(argv[6], NULL));
@@ -86,13 +87,13 @@ int main(int argc, char **argv)
     return rv;
 }
 
-void line (tgaImage *image, 
+void BRLine(tgaImage *image, 
            int x0, int y0,
            int x1, int y1,
            tgaColor color)
 {
-    int steep = 0;
-    if (iabs(y1 - y0) > iabs(x1 - x0)) {
+    char steep = 0;
+    if (iabs(y1-y0) > iabs(x1-x0)) {
         steep = 1;
         swap(&x0, &y0);
         swap(&x1, &y1);
@@ -103,14 +104,22 @@ void line (tgaImage *image,
         swap(&y0, &y1);
     }
 
-    int x;
-    double y;
-    double k = ((double)(y1 - y0))/(x1 - x0);
-    for (x = x0, y = y0; x <= x1; ++x, y += k) {
-        if (steep) {
+    double threshold = 0.5; // for transition between pixels
+    double dx = x1 - x0;
+    double dy = y1 - y0;
+    double dError = fabs(dy)/dx;
+    double error = 0;
+    unsigned x, y;
+    for (x = x0, y = y0; x <= x1; ++x) {
+        if(steep) {
             tgaSetPixel(image, (unsigned int)y, (unsigned int)x, color);
         } else {
             tgaSetPixel(image, (unsigned int)x, (unsigned int)y, color);
+        }
+        error += dError;
+        if(error > threshold) {
+            y += sign(dy);
+            error -= 1;
         }
     }
 }
@@ -123,4 +132,8 @@ void swap(int *a, int *b) {
 
 int iabs(int a) {
     return (a >= 0) ? a : -a;
+}
+
+int sign(double x) {
+    return (x >= 0) ? 1: -1;
 }
