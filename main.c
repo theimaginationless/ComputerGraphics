@@ -19,6 +19,24 @@ void line (tgaImage *image,
            int x1, int y1,
            tgaColor color);
 
+void meshgrid(tgaImage *image, Model *model) {
+    tgaColor white = tgaRGB(255, 255, 255);
+
+    for (unsigned i = 0; i < model->nface; ++i) {
+        int screen_coords[3][2];
+        for (unsigned j = 0; j < 3; ++j) {
+            Vec3 *v = &(model->vertices[model->faces[i][3*j]]);
+            screen_coords[j][0] = ((*v)[0] + 1) * image->width / 2;
+            screen_coords[j][1] = (1 - (*v)[1]) * image->height / 2;
+        }
+
+        for (unsigned j = 0; j < 3; ++j) {
+            line(image, screen_coords[j][0],screen_coords[j][1],
+                screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1],white);
+        }
+    }
+}
+
 
 int main(int argc, char **argv)
 {
@@ -30,6 +48,8 @@ int main(int argc, char **argv)
 
     tgaImage *image = tgaNewImage(HEIGHT, WIDTH, RGB);
     Model *model = loadFromObj(argv[1]);
+
+    meshgrid(image, model);
 
     if (-1 == tgaSaveToFile(image, argv[2])) {
         perror("tgaSateToFile");
