@@ -6,7 +6,7 @@
 
 #include <unistd.h>
 
-//#define DEBUG
+#define DEBUG
 
 #define WIDTH 800
 #define HEIGHT 800
@@ -47,6 +47,13 @@ Model *offsetModel(Model *model, double x, double y, double z) {
 }
 
 void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, tgaColor color) {
+    if(((y0 == y1) && (y1 == y2)) || ((x0 == x1) && (x1 == x2))) {
+        #ifdef DEBUG
+        printf("It's a point! Skip.\n");
+        #endif
+
+        return;
+    }
     if(y0 > y2) {
         swap(&y0, &y2);
         swap(&x0, &x2);
@@ -59,6 +66,15 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
         swap(&y1, &y2);
         swap(&x1, &x2);
     }
+
+    if((y0 == y2) || ((x0 == x1) && (x1 == x2))) {
+        #ifdef DEBUG
+        printf("It's a line! Skip.\n");
+        #endif
+
+        return;
+    }
+
     int yend; // End point of polygon
     if((y0 < y1) &&  (y1 < y2)) {
         yend = y1;
@@ -179,16 +195,6 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
         triangle(image, screen_coords[j][0],screen_coords[j][1],
             screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1],
             screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], randColor);   
-    }
-    
-    for (unsigned i = 0; i < model->nface; ++i) {
-        int screen_coords[3][2];
-        for (unsigned j = 0; j < 3; ++j) {
-            Vec3 *v = &(model->vertices[model->faces[i][3*j]]);
-            screen_coords[j][0] = ((*v)[0] + 1) * image->width / 2;
-            screen_coords[j][1] = (1 - (*v)[1]) * image->height / 2;
-        }
-        
     }
 }
 
