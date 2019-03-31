@@ -6,7 +6,7 @@
 
 #include <unistd.h>
 
-#define DEBUG
+//#define DEBUG
 
 #define WIDTH 800
 #define HEIGHT 800
