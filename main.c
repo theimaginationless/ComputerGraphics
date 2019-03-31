@@ -54,6 +54,7 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
 
         return;
     }
+    
     if(y0 > y2) {
         swap(&y0, &y2);
         swap(&x0, &x2);
@@ -68,6 +69,7 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
     }
 
     if((y0 == y2) || ((x0 == x1) && (x1 == x2))) {
+
         #ifdef DEBUG
         printf("It's a line! Skip.\n");
         #endif
@@ -75,20 +77,13 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
         return;
     }
 
-    int yend; // End point of polygon
-    if((y0 < y1) &&  (y1 < y2)) {
-        yend = y1;
-    } else {
-        yend = y2;
-    }
-
     #ifdef DEBUG
-    printf("yend y0 y1 y2 %d %d %d %d\n", yend, y0, y1, y2);
+    printf("y0 y1 y2 %d %d %d\n", y0, y1, y2);
     printf("DEBUG x0 x1 x2 %d %d %d\n", x0, x1, x2);
     #endif
 
-    int xa, xb, yfinal;
-    for(int y = y0; y <= yend; y++) {
+    int xa, xb, y;
+    for(y = y0; y <= y1; y++) {
         
 
         if((y1 - y0) != 0) {
@@ -102,7 +97,6 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
             xb = x0;
         }
 
-        int xstart, xend;
         if(xa > xb) {
             swap(&xa, &xb);
         }
@@ -116,60 +110,51 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
             #endif
             tgaSetPixel(image, x, y, color);
         }
-        yfinal = y;
     }
-    if((y0 < y1) &&  (y1 < y2)) {
-        y0 = yfinal;
-        y1 = yfinal;
-        x0 = xa;
-        x1 = xb;
+   	/*
+	* Redefinition upper vertices (x, y)
+    */
+	y0 = y1 = y;
+	x0 = xa;
+	x1 = xb;
 
-        if(y0 > y2) {
-            swap(&y0, &y2);
-            swap(&x0, &x2);
-        }
-        if(y0 > y1) {
-            swap(&y0, &y1);
-            swap(&x0, &x1);
-        }
-        if(y1 > y2) {
-            swap(&y1, &y2);
-            swap(&x1, &x2);
-        }
-        #ifdef DEBUG
-        printf("ADDITION x0 y0 %d %d; x1 y1 %d %d; x2 y2 %d %d\n", x0, y0, x1, y1, x2, y2);
-        #endif
+    #ifdef DEBUG
+    printf("ADDITION x0 y0 %d %d; x1 y1 %d %d; x2 y2 %d %d\n", x0, y0, x1, y1, x2, y2);
+    #endif
 
-        for(int y = y0; y <= y2; y++) {
+    for(int y = y0; y <= y2; y++) {
         
-            if((y2 - y0) != 0) {
-                xa = x0 + (x2 - x0)*(y - y0)/(y2 - y0);
-            } else {
-                xa = x0;
-            }
-            if((y2 - y1) != 0) {
-                xb = x1 + (x2 - x1)*(y - y1)/(y2 - y1);
-                #ifdef DEBUG
-                printf("xb => y2 != y0 => %d\n", xb);
-                #endif
-            } else {
-                xb = x0;
-            }
+        if((y2 - y0) != 0) {
+            xa = x0 + (x2 - x0)*(y - y0)/(y2 - y0);
+        } else {
+            xa = x0;
+        }
+        if((y2 - y1) != 0) {
+            xb = x1 + (x2 - x1)*(y - y1)/(y2 - y1);
 
-            int xstart, xend;
-            if(xa > xb) {
-                swap(&xa, &xb);
-            }
             #ifdef DEBUG
-            printf("DEBUG ADDITION xa xb %d %d\n", xa, xb);
+            printf("xb => y2 != y0 => %d\n", xb);
             #endif
 
-            for(int x = xa; x <= xb; x++) {
-                #ifdef DEBUG
-                printf("SET PIXEL ADDITION X Y %d %d\n", x, y);
-                #endif
-                tgaSetPixel(image, x, y, color);
-            }
+        } else {
+            xb = x0;
+        }
+
+      	if(xa > xb) {
+            swap(&xa, &xb);
+        }
+
+        #ifdef DEBUG
+        printf("DEBUG ADDITION xa xb %d %d\n", xa, xb);
+        #endif
+
+        for(int x = xa; x <= xb; x++) {
+
+            #ifdef DEBUG
+            printf("SET PIXEL ADDITION X Y %d %d\n", x, y);
+            #endif
+
+            tgaSetPixel(image, x, y, color);
         }
     }
 }
