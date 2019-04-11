@@ -176,7 +176,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 		}*/
 		
 		int j = 0;
-		tgaColor randColor = tgaRGB(rand() % 255, rand() % 255, rand() % 255);
+		tgaColor randColor = tgaRGB(255, 255, 255);
 		triangle(image, screen_coords[j][0],screen_coords[j][1],
 			screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1],
 			screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], randColor);   
