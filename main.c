@@ -170,11 +170,11 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			screen_coords[j][1] = (1 - (*v)[1]) * image->height / 2;
 		}
 
-		for (unsigned j = 0; j < 3; ++j) {
+		/*for (unsigned j = 0; j < 3; ++j) {
 			BRLine(image, screen_coords[j][0],screen_coords[j][1],
 				screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1],white);
-			
-		}
+		}*/
+		
 		int j = 0;
 		tgaColor randColor = tgaRGB(rand() % 255, rand() % 255, rand() % 255);
 		triangle(image, screen_coords[j][0],screen_coords[j][1],
