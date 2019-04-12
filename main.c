@@ -6,7 +6,6 @@
 
 #include <unistd.h>
 
-//#define DEBUG
 
 #define WIDTH 800
 #define HEIGHT 800
@@ -159,27 +158,85 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
 	}
 }
 
+double getAngleNormal(Vec3 lightDirection, double x1, double y1, double z1,
+		double x2, double y2, double z2,
+		double x3, double y3, double z3) {
+			double a, b, c;
+			a = y1*(z2 - z3) + y2*(z3 - z1) + y3*(z1 - z2);
+			b = z1*(x2 - x3) + z2*(x3 - x1) + z3*(x1 - x2);
+			c = x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2);
+
+			#ifdef DEBUG
+			printf("getAngleNormal: Surface: %f, %f, %f\n", a, b, c);
+			#endif
+
+			if((a == b) && (b == c)) {
+				return 1;
+			}
+
+			// normalize normal vector
+			double lenFrac = sqrt(a*a + b*b + c*c);
+			Vec3 normal = {a/lenFrac, b/lenFrac, c/lenFrac};
+
+			#ifdef DEBUG
+			printf("getAngleNormal: Normal: %f, %f, %f\n", normal[0], normal[1], normal[2]);
+			#endif
+
+			#ifdef DEBUG
+			printf("getAngleNormal: vv: %f\n", (lightDirection[2]));
+			#endif
+
+			// cos(normal ^ lightDirection)
+			double fracA = sqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
+			double fracB = sqrt(sqrt(lightDirection[0] * lightDirection[0] + lightDirection[1] * lightDirection[1] + lightDirection[2] * lightDirection[2]));
+			double angle = (normal[0]*lightDirection[0] + normal[1]*lightDirection[1] + normal[2]*lightDirection[2])/(fracA * fracB);
+
+			#ifdef DEBUG
+			printf("getAngleNormal: angle: %f\n", angle);
+			#endif
+
+			return angle;
+		}
 
 void meshgrid(tgaImage *image, Model *model, char *argv) {
-	tgaColor white = tgaRGB(255, 255, 255);
+	double lightIntensity = 1;
+	double color = 255;
+	Vec3 lightDirection = {0, 0, -0.1};
+	Vec3 *vertices[3];
 	for (unsigned i = 0; i < model->nface; ++i) {
 		int screen_coords[3][2];
 		for (unsigned j = 0; j < 3; ++j) {
 			Vec3 *v = &(model->vertices[model->faces[i][3*j]]);
+			vertices[j] = &(model->vertices[model->faces[i][3*j]]);
 			screen_coords[j][0] = ((*v)[0] + 1) * image->width / 2;
 			screen_coords[j][1] = (1 - (*v)[1]) * image->height / 2;
 		}
-
-		/*for (unsigned j = 0; j < 3; ++j) {
-			BRLine(image, screen_coords[j][0],screen_coords[j][1],
-				screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1],white);
-		}*/
 		
-		int j = 0;
-		tgaColor randColor = tgaRGB(255, 255, 255);
-		triangle(image, screen_coords[j][0],screen_coords[j][1],
-			screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1],
-			screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], randColor);   
+		double nCosAngle = getAngleNormal(lightDirection,
+			(*vertices[0])[0], (*vertices[0])[1], (*vertices[0])[2],
+			(*vertices[1])[0], (*vertices[1])[1], (*vertices[1])[2],
+			(*vertices[2])[0], (*vertices[2])[1], (*vertices[2])[2]);
+
+		double colorIntensity = lightIntensity * nCosAngle;
+
+		#ifdef DEBUG
+		printf("lightIntensity = %f; colorIntensity = %f\n", lightIntensity, colorIntensity);
+		#endif
+
+		if(colorIntensity <= 0) {
+			int j = 0;
+			double colorCode = round(fabs(colorIntensity) * color);
+
+			#ifdef DEBUG
+			printf("tgaColor: %f\n", colorCode);
+			#endif
+			tgaColor randColor = tgaRGB(colorCode, colorCode, colorCode);
+
+			triangle(image, screen_coords[j][0],screen_coords[j][1],
+				screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1],
+				screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], randColor); 
+		}
+
 	}
 }
 
@@ -194,7 +251,10 @@ int main(int argc, char **argv)
 	tgaImage *image = tgaNewImage(HEIGHT, WIDTH, RGB);
 	Model *model = loadFromObj(argv[1]);
 
- 
+	/*
+	* ./main obj/cat.obj cat.tga <SCALE> <XOFFSET> <YOFFSET> <ZOFFSET>
+	* SCALE, XOFFSET, YOFFSET, ZOFFSET - fractional values.
+	*/
 	if(argc > 6) {
 		scaleModel(model, strtod(argv[3], NULL));
 		model = offsetModel(model, strtod(argv[4], NULL), strtod(argv[5], NULL), strtod(argv[6], NULL));
@@ -210,8 +270,6 @@ int main(int argc, char **argv)
 	tgaFreeImage(image);    
 	return rv;
 }
-
-
 
 void BRLine(tgaImage *image, 
 		   int x0, int y0,
