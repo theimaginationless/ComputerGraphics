@@ -100,6 +100,7 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 	#endif
 
 	int xa, xb, y;
+
 	for(y = y0; y <= y1; y++) {
 		
 
@@ -122,7 +123,6 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 		#endif
 
 		for(int x = xa; x <= xb; x++) {
-
 			int idx = x + y * WIDTH;
 			int z = round(getZCoord(x0, y0, z0, x1, y1, z1, x2, y2, z2, x, y));
 
@@ -135,10 +135,12 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 				tgaSetPixel(image, x, y, color);
 			}
 		}
+		
 	}
 	/*
 	* Redefinition upper vertices (x, y)
 	*/
+
 	y0 = y1 = y;
 	x0 = xa;
 	x1 = xb;
@@ -148,9 +150,12 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 	#endif
 
 	for(int y = y0; y <= y2; y++) {
-		
 		if((y2 - y0) != 0) {
 			xa = x0 + (x2 - x0)*(y - y0)/(y2 - y0);
+
+			#ifdef DEBUG
+			printf("xb => y2 - y0 != 0 => %d\n", xb);
+			#endif
 		} else {
 			xa = x0;
 		}
@@ -158,7 +163,7 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 			xb = x1 + (x2 - x1)*(y - y1)/(y2 - y1);
 
 			#ifdef DEBUG
-			printf("xb => y2 != y0 => %d\n", xb);
+			printf("xb => y2 - y1 != 0 => %d\n", xb);
 			#endif
 
 		} else {
@@ -216,7 +221,7 @@ double getAngleNormal(Vec3 lightDirection, double x0, double y0, double z0,
 
 			// cos(normal ^ lightDirection)
 			double fracA = sqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
-			double fracB = sqrt(sqrt(lightDirection[0] * lightDirection[0] + lightDirection[1] * lightDirection[1] + lightDirection[2] * lightDirection[2]));
+			double fracB = sqrt(lightDirection[0] * lightDirection[0] + lightDirection[1] * lightDirection[1] + lightDirection[2] * lightDirection[2]);
 			double angle = (normal[0]*lightDirection[0] + normal[1]*lightDirection[1] + normal[2]*lightDirection[2])/(fracA * fracB);
 
 			#ifdef DEBUG
@@ -258,9 +263,13 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 		printf("lightIntensity = %f; colorIntensity = %f\n", lightIntensity, colorIntensity);
 		#endif
 
-		if(colorIntensity <= 0) {
+		/*
+		* Note: If call triangle when colorIntensity <= 0, then we have lost poly???
+		*/
+
+		//if(colorIntensity <= 0) {
 			int j = 0;
-			double colorCode = round(fabs(colorIntensity) * color);
+			double colorCode = ceil(fabs(colorIntensity) * color);
 
 			#ifdef DEBUG
 			printf("tgaColor: %f\n", colorCode);
@@ -269,8 +278,8 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 
 			triangle(image, screen_coords[j][0], screen_coords[j][1], screen_coords[j][2],
 				screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1], screen_coords[(j+1)%3][2],
-				screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], screen_coords[(j+2)%2][2], randColor, zBuffer); 
-		}
+				screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], screen_coords[(j+2)%3][2], randColor, zBuffer); 
+		//}
 
 	}
 }
