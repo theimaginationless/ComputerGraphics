@@ -1,11 +1,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include "model.h"
-#include "tga.h"
-
 #include <unistd.h>
-
+#include "tga.h"
+#include "model.h"
 
 #define WIDTH 800
 #define HEIGHT 800
@@ -104,9 +102,13 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
 		#endif
 
 		for(int x = xa; x <= xb; x++) {
+			int idx = x + y * WIDTH;
+
+
 			#ifdef DEBUG
 			printf("SET PIXEL X Y %d %d\n", x, y);
 			#endif
+
 			tgaSetPixel(image, x, y, color);
 		}
 	}
@@ -148,7 +150,6 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
 		#endif
 
 		for(int x = xa; x <= xb; x++) {
-
 			#ifdef DEBUG
 			printf("SET PIXEL ADDITION X Y %d %d\n", x, y);
 			#endif
@@ -158,13 +159,13 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
 	}
 }
 
-double getAngleNormal(Vec3 lightDirection, double x1, double y1, double z1,
-		double x2, double y2, double z2,
-		double x3, double y3, double z3) {
+double getAngleNormal(Vec3 lightDirection, double x0, double y0, double z0,
+		double x1, double y1, double z1,
+		double x2, double y2, double z2) {
 			double a, b, c;
-			a = y1*(z2 - z3) + y2*(z3 - z1) + y3*(z1 - z2);
-			b = z1*(x2 - x3) + z2*(x3 - x1) + z3*(x1 - x2);
-			c = x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2);
+			a = y0*(z1 - z2) + y1*(z2 - z0) + y2*(z0 - z1);
+			b = z0*(x1 - x2) + z1*(x2 - x0) + z2*(x0 - x1);
+			c = x0*(y1 - y2) + x1*(y2 - y0) + x2*(y0 - y1);
 
 			#ifdef DEBUG
 			printf("getAngleNormal: Surface: %f, %f, %f\n", a, b, c);
@@ -199,6 +200,9 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 	double color = 255;
 	Vec3 lightDirection = {0, 0, -0.1};
 	Vec3 *vertices[3];
+
+
+
 	for (unsigned i = 0; i < model->nface; ++i) {
 		int screen_coords[3][2];
 		for (unsigned j = 0; j < 3; ++j) {
@@ -206,6 +210,8 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			vertices[j] = &(model->vertices[model->faces[i][3*j]]);
 			screen_coords[j][0] = ((*v)[0] + 1) * image->width / 2;
 			screen_coords[j][1] = (1 - (*v)[1]) * image->height / 2;
+
+
 		}
 		
 		double nCosAngle = getAngleNormal(lightDirection,
