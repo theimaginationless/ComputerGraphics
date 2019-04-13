@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <unistd.h>
 #include "tga.h"
 #include "model.h"
 
 #define WIDTH 800
 #define HEIGHT 800
+#define DEPTH 255
 
 void swap(int *a, int *b);
 int iabs(int a);
@@ -43,7 +45,33 @@ Model *offsetModel(Model *model, double x, double y, double z) {
 	return model;
 }
 
-void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, tgaColor color) {
+double getZCoord(int x0, int y0, int z0,
+				int x1, int y1, int z1,
+				int x2, int y2, int z2,
+				int x, int y) {
+					int a = y0*(z1 - z2) + y1*(z2 - z0) + y2*(z0 - z1);
+					int b = z0*(x1 - x2) + z1*(x2 - x0) + z2*(x0 - x1);
+					int c = x0*(y1 - y2) + x1*(y2 - y0) + x2*(y0 - y1);
+					
+					#ifdef DEBUG
+					printf("getZCoord: a = %d; b = %d; c = %d\n", a, b, c);
+					#endif
+
+					if(c == 0) {
+						return 0;
+					}
+
+					double z = (a*(x - x0) + b*(y - y0) - c*z0)/(double)c;
+
+					#ifdef DEBUG
+					printf("getZCoord: z = %f\n", z);
+					#endif
+
+					return z;
+				}
+
+void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
+								int x2, int y2, int z2, tgaColor color, double *zBuffer) {
 	if(((y0 == y1) && (y1 == y2)) || ((x0 == x1) && (x1 == x2))) {
 		#ifdef DEBUG
 		printf("It's a point! Skip.\n");
@@ -102,14 +130,18 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
 		#endif
 
 		for(int x = xa; x <= xb; x++) {
+
 			int idx = x + y * WIDTH;
+			int z = round(getZCoord(x0, y0, z0, x1, y1, z1, x2, y2, z2, x, y));
 
+			if(zBuffer[idx] < z) {
+				zBuffer[idx] = z;
+				#ifdef DEBUG
+				printf("SET PIXEL X Y %d %d\n", x, y);
+				#endif
 
-			#ifdef DEBUG
-			printf("SET PIXEL X Y %d %d\n", x, y);
-			#endif
-
-			tgaSetPixel(image, x, y, color);
+				tgaSetPixel(image, x, y, color);
+			}
 		}
 	}
 	/*
@@ -150,11 +182,18 @@ void triangle(tgaImage *image, int x0, int y0, int x1, int y1, int x2, int y2, t
 		#endif
 
 		for(int x = xa; x <= xb; x++) {
-			#ifdef DEBUG
-			printf("SET PIXEL ADDITION X Y %d %d\n", x, y);
-			#endif
 
-			tgaSetPixel(image, x, y, color);
+			int idx = x + y * WIDTH;
+			int z = round(getZCoord(x0, y0, z0, x1, y1, z1, x2, y2, z2, x, y));
+
+			if(zBuffer[idx] < z) {
+				zBuffer[idx] = z;
+				#ifdef DEBUG
+				printf("SET PIXEL ADDITION X Y %d %d\n", x, y);
+				#endif
+
+				tgaSetPixel(image, x, y, color);
+			}
 		}
 	}
 }
@@ -198,20 +237,22 @@ double getAngleNormal(Vec3 lightDirection, double x0, double y0, double z0,
 void meshgrid(tgaImage *image, Model *model, char *argv) {
 	double lightIntensity = 1;
 	double color = 255;
-	Vec3 lightDirection = {0, 0, -0.1};
+	Vec3 lightDirection = {0, 0, -0.7};
 	Vec3 *vertices[3];
+	double zBuffer[HEIGHT * WIDTH];
 
-
+	for(int i = 0; i < WIDTH*HEIGHT; i++) {
+		zBuffer[i] = INT_MIN;
+	}
 
 	for (unsigned i = 0; i < model->nface; ++i) {
-		int screen_coords[3][2];
+		int screen_coords[3][3];
 		for (unsigned j = 0; j < 3; ++j) {
 			Vec3 *v = &(model->vertices[model->faces[i][3*j]]);
 			vertices[j] = &(model->vertices[model->faces[i][3*j]]);
 			screen_coords[j][0] = ((*v)[0] + 1) * image->width / 2;
 			screen_coords[j][1] = (1 - (*v)[1]) * image->height / 2;
-
-
+			screen_coords[j][2] = (1 - (*v)[2]) * DEPTH/2;
 		}
 		
 		double nCosAngle = getAngleNormal(lightDirection,
@@ -234,9 +275,9 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			#endif
 			tgaColor randColor = tgaRGB(colorCode, colorCode, colorCode);
 
-			triangle(image, screen_coords[j][0],screen_coords[j][1],
-				screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1],
-				screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], randColor); 
+			triangle(image, screen_coords[j][0], screen_coords[j][1], screen_coords[j][2],
+				screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1], screen_coords[(j+1)%3][2],
+				screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], screen_coords[(j+2)%2][2], randColor, zBuffer); 
 		}
 
 	}
