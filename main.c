@@ -71,35 +71,27 @@ double getZCoord(int x0, int y0, int z0,
 				}
 
 void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
-								int x2, int y2, int z2, tgaColor color, double *zBuffer) {
-	if(((y0 == y1) && (y1 == y2)) || ((x0 == x1) && (x1 == x2))) {
-		#ifdef DEBUG
-		printf("It's a point! Skip.\n");
-		#endif
-
+								int x2, int y2, int z2, tgaColor color, int *zBuffer) {
+	if((y0 == y1) && (y0 == y2)) {
 		return;
 	}
-	
-	if(y0 > y2) {
-		swap(&y0, &y2);
-		swap(&x0, &x2);
-	}
+
 	if(y0 > y1) {
 		swap(&y0, &y1);
 		swap(&x0, &x1);
+		swap(&z0, &z1);
 	}
+
+	if(y0 > y2) {
+		swap(&y0, &y2);
+		swap(&x0, &x2);
+		swap(&z0, &z2);
+	}
+	
 	if(y1 > y2) {
 		swap(&y1, &y2);
 		swap(&x1, &x2);
-	}
-
-	if((y0 == y2) || ((x0 == x1) && (x1 == x2))) {
-
-		#ifdef DEBUG
-		printf("It's a line! Skip.\n");
-		#endif
-
-		return;
+		swap(&z1, &z2);
 	}
 
 	#ifdef DEBUG
@@ -137,7 +129,7 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 			if(zBuffer[idx] < z) {
 				zBuffer[idx] = z;
 				#ifdef DEBUG
-				printf("SET PIXEL X Y %d %d\n", x, y);
+				printf("SET PIXEL X = %d; Y = %d; Z = %d\n", x, y, z);
 				#endif
 
 				tgaSetPixel(image, x, y, color);
@@ -189,7 +181,7 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 			if(zBuffer[idx] < z) {
 				zBuffer[idx] = z;
 				#ifdef DEBUG
-				printf("SET PIXEL ADDITION X Y %d %d\n", x, y);
+				printf("SET PIXEL X = %d; Y = %d; Z = %d\n", x, y, z);
 				#endif
 
 				tgaSetPixel(image, x, y, color);
@@ -239,7 +231,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 	double color = 255;
 	Vec3 lightDirection = {0, 0, -0.7};
 	Vec3 *vertices[3];
-	double zBuffer[HEIGHT * WIDTH];
+	int zBuffer[HEIGHT * WIDTH];
 
 	for(int i = 0; i < WIDTH*HEIGHT; i++) {
 		zBuffer[i] = INT_MIN;
