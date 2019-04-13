@@ -182,10 +182,6 @@ double getAngleNormal(Vec3 lightDirection, double x1, double y1, double z1,
 			printf("getAngleNormal: Normal: %f, %f, %f\n", normal[0], normal[1], normal[2]);
 			#endif
 
-			#ifdef DEBUG
-			printf("getAngleNormal: vv: %f\n", (lightDirection[2]));
-			#endif
-
 			// cos(normal ^ lightDirection)
 			double fracA = sqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
 			double fracB = sqrt(sqrt(lightDirection[0] * lightDirection[0] + lightDirection[1] * lightDirection[1] + lightDirection[2] * lightDirection[2]));
