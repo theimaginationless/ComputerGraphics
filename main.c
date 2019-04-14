@@ -6,8 +6,8 @@
 #include "tga.h"
 #include "model.h"
 
-#define WIDTH 800
-#define HEIGHT 800
+#define WIDTH 1200
+#define HEIGHT 1200
 #define DEPTH 255
 
 void swap(int *a, int *b);
