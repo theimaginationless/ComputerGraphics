@@ -6,8 +6,8 @@
 #include "tga.h"
 #include "model.h"
 
-#define WIDTH 1200
-#define HEIGHT 1200
+#define WIDTH 1400
+#define HEIGHT 1400
 #define DEPTH 255
 
 void swap(int *a, int *b);
@@ -105,12 +105,12 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 		
 
 		if((y1 - y0) != 0) {
-			xa = x0 + (x1-x0) * (y - y0)/(y1 - y0);
+			xa = round(x0 + (x1-x0) * (double)(y - y0)/(y1 - y0));
 		} else {
 			xa = x0;
 		}
 		if((y2 - y0) != 0) {
-			xb = x0 + (x2-x0) * (y - y0)/(y2 - y0);
+			xb = round(x0 + (x2-x0) * (double)(y - y0)/(y2 - y0));
 		} else {
 			xb = x0;
 		}
@@ -151,7 +151,7 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 
 	for(int y = y0; y <= y2; y++) {
 		if((y2 - y0) != 0) {
-			xa = x0 + (x2 - x0)*(y - y0)/(y2 - y0);
+			xa = round(x0 + (x2 - x0)*(double)(y - y0)/(y2 - y0));
 
 			#ifdef DEBUG
 			printf("xb => y2 - y0 != 0 => %d\n", xb);
@@ -160,7 +160,7 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 			xa = x0;
 		}
 		if((y2 - y1) != 0) {
-			xb = x1 + (x2 - x1)*(y - y1)/(y2 - y1);
+			xb = round(x1 + (x2 - x1)*(double)(y - y1)/(y2 - y1));
 
 			#ifdef DEBUG
 			printf("xb => y2 - y1 != 0 => %d\n", xb);
@@ -194,6 +194,34 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 		}
 	}
 }
+
+double newgetAngleNormal(Vec3 lightDirection, double x0, double y0, double z0,
+		double x1, double y1, double z1,
+		double x2, double y2, double z2) {
+			Vec3 wc1 = {x0 - x1, y0 - y1, z0 - z1};
+			Vec3 wc2 = {x1 - x2, y1 - y2, z1 - z2};
+
+			// ^
+
+			Vec3 result = {
+				wc1[1]*wc2[2] - wc1[2]*wc2[1],
+				wc1[2]*wc2[0] - wc1[0]*wc2[2],
+				wc1[0]*wc2[1] - wc1[1]*wc2[0]};
+
+			// normalize
+			//for(int i = 0; i < 3; i++) {
+			//	result[i] /= sqrt(result[0]*result[0] + result[1]*result[1] + result[2]*result[2]);
+			//}
+			double fracA = sqrt(result[0] * result[0] + result[1] * result[1] + result[2] * result[2]);
+			double fracB = sqrt(lightDirection[0] * lightDirection[0] + lightDirection[1] * lightDirection[1] + lightDirection[2] * lightDirection[2]);
+			double res = (result[0]*lightDirection[0] + result[1]*lightDirection[1] + result[2]*lightDirection[2])/(fracA*fracB);
+			
+			#ifdef DEBUG
+			printf("getAngleNormal: angle: %f\n", res);
+			#endif
+
+			return res;
+		}
 
 double getAngleNormal(Vec3 lightDirection, double x0, double y0, double z0,
 		double x1, double y1, double z1,
