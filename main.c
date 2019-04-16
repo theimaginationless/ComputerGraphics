@@ -10,6 +10,9 @@
 #define HEIGHT 1400
 #define DEPTH 255
 
+typedef int Vec2i[2];
+typedef int Vec3i[3];
+
 void swap(int *a, int *b);
 int iabs(int a);
 int sign(double x);
@@ -69,7 +72,65 @@ double getZCoord(int x0, int y0, int z0,
 
 					return z;
 				}
+void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
+								int x2, int y2, int z2, tgaColor color, int *zBuffer) {
+	if((y0 == y1) && (y0 == y2)) {
+		return;
+	}
 
+	if(y0 > y1) {
+		swap(&y0, &y1);
+		swap(&x0, &x1);
+		swap(&z0, &z1);
+	}
+
+	if(y0 > y2) {
+		swap(&y0, &y2);
+		swap(&x0, &x2);
+		swap(&z0, &z2);
+	}
+	
+	if(y1 > y2) {
+		swap(&y1, &y2);
+		swap(&x1, &x2);
+		swap(&z1, &z2);
+	}
+
+	int totalHeight = y2-y0;
+	for(int i = 0; i < totalHeight; i++) {
+		int secondHalf = i > y1-y0 || y1 == y0;
+		int segmentHeight = secondHalf ? y2-y1 : y1-y0;
+		double alpha = (double)i/totalHeight;
+		double beta = (double)(i-(secondHalf ? y1-y0 : 0))/segmentHeight;
+		
+		Vec3i A = {x0 + ((x2 - x0)*alpha), y0 + ((y2 - y0)*alpha), z0 + ((z2 - z0)*alpha)};
+		Vec3i B = {x1 + ((x2 - x1)*beta), y1 + ((y2 - y1)*beta), z1 + ((z2 - z1)*beta)};
+		if(!secondHalf) {
+			B[0] = x0 + ((x1 - x0)*beta);
+			B[1] = y0 + ((y1 - y0)*beta);
+			B[2] = z0 + ((z1 - z0)*beta);
+		}
+		if(A[0] > B[0]) {
+			swap(&A[0], &B[0]);
+		}
+
+		for(int j = A[0]; j <=B[0]; j++) {
+			double phi = B[0]==A[0] ? 1. : (double)(j-A[0])/(double)(B[0]-A[0]);
+			Vec3i P = {A[0] + ((B[0] - A[0])*phi), A[1] + ((B[1] - A[1])*phi), A[2] + ((B[2] - A[2])*phi)};
+			int idx = P[0] + P[1] * WIDTH;
+			//int z = round(getZCoord(x0, y0, z0, x1, y1, z1, x2, y2, z2, j, y0+i));
+
+			if(zBuffer[idx] < P[2]) {
+				zBuffer[idx] = P[2];
+				#ifdef DEBUG
+				printf("SET PIXEL X = %d; Y = %d; Z = %d\n", j, i, P[2]);
+				#endif
+
+				tgaSetPixel(image, j, y0+i, color);
+			}
+		}
+	}
+								}
 void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 								int x2, int y2, int z2, tgaColor color, int *zBuffer) {
 	if((y0 == y1) && (y0 == y2)) {
@@ -277,7 +338,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			vertices[j] = &(model->vertices[model->faces[i][3*j]]);
 			screen_coords[j][0] = round(((*v)[0] + 1) * image->width / 2);
 			screen_coords[j][1] = round((1 - (*v)[1]) * image->height / 2);
-			screen_coords[j][2] = round((1 - (*v)[2]) * DEPTH/2);
+			screen_coords[j][2] = round((1 + (*v)[2]) * DEPTH/2);
 		}
 		
 		double nCosAngle = getAngleNormal(lightDirection,
@@ -304,7 +365,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			#endif
 			tgaColor randColor = tgaRGB(colorCode, colorCode, colorCode);
 
-			triangle(image, screen_coords[j][0], screen_coords[j][1], screen_coords[j][2],
+			newTriangle(image, screen_coords[j][0], screen_coords[j][1], screen_coords[j][2],
 				screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1], screen_coords[(j+1)%3][2],
 				screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], screen_coords[(j+2)%3][2], randColor, zBuffer); 
 		}
