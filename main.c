@@ -295,7 +295,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 		* Note: If call triangle when colorIntensity <= 0, then we have lost poly???
 		*/
 
-		//if(colorIntensity <= 0) {
+		if(colorIntensity >= 0) {
 			int j = 0;
 			double colorCode = round(fabs(colorIntensity) * color);
 
@@ -307,7 +307,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			triangle(image, screen_coords[j][0], screen_coords[j][1], screen_coords[j][2],
 				screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1], screen_coords[(j+1)%3][2],
 				screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], screen_coords[(j+2)%3][2], randColor, zBuffer); 
-		//}
+		}
 
 	}
 }
