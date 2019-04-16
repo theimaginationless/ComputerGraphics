@@ -297,7 +297,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 
 		//if(colorIntensity <= 0) {
 			int j = 0;
-			double colorCode = ceil(fabs(colorIntensity) * color);
+			double colorCode = round(fabs(colorIntensity) * color);
 
 			#ifdef DEBUG
 			printf("tgaColor: %f\n", colorCode);
