@@ -250,7 +250,7 @@ double getAngleNormal(Vec3 lightDirection, double x0, double y0, double z0,
 			// cos(normal ^ lightDirection)
 			double fracA = sqrt(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
 			double fracB = sqrt(lightDirection[0] * lightDirection[0] + lightDirection[1] * lightDirection[1] + lightDirection[2] * lightDirection[2]);
-			double angle = (normal[0]*lightDirection[0] + normal[1]*lightDirection[1] + normal[2]*lightDirection[2])/(fracA * fracB);
+			double angle = (normal[0]*lightDirection[0] + normal[1]*lightDirection[1] + normal[2]*lightDirection[2]);
 
 			#ifdef DEBUG
 			printf("getAngleNormal: angle: %f\n", angle);
@@ -262,7 +262,7 @@ double getAngleNormal(Vec3 lightDirection, double x0, double y0, double z0,
 void meshgrid(tgaImage *image, Model *model, char *argv) {
 	double lightIntensity = 1;
 	double color = 255;
-	Vec3 lightDirection = {0, 0, -0.7};
+	Vec3 lightDirection = {0, 0, 1};
 	Vec3 *vertices[3];
 	int zBuffer[HEIGHT * WIDTH];
 
@@ -275,9 +275,9 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 		for (unsigned j = 0; j < 3; ++j) {
 			Vec3 *v = &(model->vertices[model->faces[i][3*j]]);
 			vertices[j] = &(model->vertices[model->faces[i][3*j]]);
-			screen_coords[j][0] = ((*v)[0] + 1) * image->width / 2;
-			screen_coords[j][1] = (1 - (*v)[1]) * image->height / 2;
-			screen_coords[j][2] = (1 - (*v)[2]) * DEPTH/2;
+			screen_coords[j][0] = round(((*v)[0] + 1) * image->width / 2);
+			screen_coords[j][1] = round((1 - (*v)[1]) * image->height / 2);
+			screen_coords[j][2] = round((1 - (*v)[2]) * DEPTH/2);
 		}
 		
 		double nCosAngle = getAngleNormal(lightDirection,
