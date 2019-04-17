@@ -228,7 +228,7 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 			printf("xb => y2 - y0 != 0 => %d\n", xb);
 			#endif
 		} else {
-			xa = x0;
+			xa = x1;
 		}
 		if((y2 - y1) != 0) {
 			xb = round(x1 + (x2 - x1)*(double)(y - y1)/(y2 - y1));
