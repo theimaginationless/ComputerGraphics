@@ -397,7 +397,6 @@ int main(int argc, char **argv)
 
 	tgaImage *image = tgaNewImage(HEIGHT, WIDTH, RGB);
 	Model *model = loadFromObj(argv[1]);
-	loadDiffuseMap(model, "obj/african_head_diffuse.tga");
 	/*
 	* ./main obj/cat.obj cat.tga <SCALE> <XOFFSET> <YOFFSET> <ZOFFSET>
 	* SCALE, XOFFSET, YOFFSET, ZOFFSET - fractional values.
