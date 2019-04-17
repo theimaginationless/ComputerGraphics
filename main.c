@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <string.h>
 #include <unistd.h>
 #include "tga.h"
 #include "model.h"
@@ -72,8 +73,16 @@ double getZCoord(int x0, int y0, int z0,
 
 					return z;
 				}
+
+void swapf(double *a, double *b) {
+	double t = *a;
+	*a = *b;
+	*b = t;
+}
+
 void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
-								int x2, int y2, int z2, tgaColor color, int *zBuffer) {
+								int x2, int y2, int z2,
+								tgaColor color, int *zBuffer) {
 	if((y0 == y1) && (y0 == y2)) {
 		return;
 	}
@@ -111,14 +120,15 @@ void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1
 			B[2] = z0 + ((z1 - z0)*beta);
 		}
 		if(A[0] > B[0]) {
-			swap(&A[0], &B[0]);
+			for(int i = 0; i < 3; i++) {
+				swap(&A[i], &B[i]);
+			}
 		}
 
 		for(int j = A[0]; j <=B[0]; j++) {
 			double phi = B[0]==A[0] ? 1. : (double)(j-A[0])/(double)(B[0]-A[0]);
-			Vec3i P = {A[0] + ((B[0] - A[0])*phi), A[1] + ((B[1] - A[1])*phi), A[2] + ((B[2] - A[2])*phi)};
+			Vec3 P = {A[0] + ((B[0] - A[0])*phi), A[1] + ((B[1] - A[1])*phi), A[2] + ((B[2] - A[2])*phi)};
 			int idx = P[0] + P[1] * WIDTH;
-			//int z = round(getZCoord(x0, y0, z0, x1, y1, z1, x2, y2, z2, j, y0+i));
 
 			if(zBuffer[idx] < P[2]) {
 				zBuffer[idx] = P[2];
@@ -126,7 +136,7 @@ void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1
 				printf("SET PIXEL X = %d; Y = %d; Z = %d\n", j, i, P[2]);
 				#endif
 
-				tgaSetPixel(image, j, y0+i, color);
+				tgaSetPixel(image, P[0], P[1], color);
 			}
 		}
 	}
@@ -168,7 +178,7 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 		if((y1 - y0) != 0) {
 			xa = round(x0 + (x1-x0) * (double)(y - y0)/(y1 - y0));
 		} else {
-			xa = x0;
+			xa = x1;
 		}
 		if((y2 - y0) != 0) {
 			xb = round(x0 + (x2-x0) * (double)(y - y0)/(y2 - y0));
@@ -326,6 +336,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 	Vec3 lightDirection = {0, 0, 1};
 	Vec3 *vertices[3];
 	int zBuffer[HEIGHT * WIDTH];
+	Vec3 *uv[3];
 
 	for(int i = 0; i < WIDTH*HEIGHT; i++) {
 		zBuffer[i] = INT_MIN;
@@ -338,7 +349,9 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			vertices[j] = &(model->vertices[model->faces[i][3*j]]);
 			screen_coords[j][0] = round(((*v)[0] + 1) * image->width / 2);
 			screen_coords[j][1] = round((1 - (*v)[1]) * image->height / 2);
-			screen_coords[j][2] = round((1 + (*v)[2]) * DEPTH/2);
+			screen_coords[j][2] = round((1 - (*v)[2]) * DEPTH/2);
+
+			uv[j] = getDiffuseUV(model, i, j);
 		}
 		
 		double nCosAngle = getAngleNormal(lightDirection,
@@ -365,9 +378,10 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			#endif
 			tgaColor randColor = tgaRGB(colorCode, colorCode, colorCode);
 
-			newTriangle(image, screen_coords[j][0], screen_coords[j][1], screen_coords[j][2],
+			triangle(image, screen_coords[j][0], screen_coords[j][1], screen_coords[j][2],
 				screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1], screen_coords[(j+1)%3][2],
-				screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], screen_coords[(j+2)%3][2], randColor, zBuffer); 
+				screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], screen_coords[(j+2)%3][2],
+				randColor, zBuffer); 
 		}
 
 	}
@@ -383,7 +397,7 @@ int main(int argc, char **argv)
 
 	tgaImage *image = tgaNewImage(HEIGHT, WIDTH, RGB);
 	Model *model = loadFromObj(argv[1]);
-
+	loadDiffuseMap(model, "obj/african_head_diffuse.tga");
 	/*
 	* ./main obj/cat.obj cat.tga <SCALE> <XOFFSET> <YOFFSET> <ZOFFSET>
 	* SCALE, XOFFSET, YOFFSET, ZOFFSET - fractional values.
