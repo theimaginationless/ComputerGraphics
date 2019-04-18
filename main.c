@@ -370,7 +370,6 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 		*/
 
 		if(colorIntensity >= 0) {
-			int j = 0;
 			double colorCode = round(fabs(colorIntensity) * color);
 
 			#ifdef DEBUG
@@ -378,9 +377,9 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			#endif
 			tgaColor randColor = tgaRGB(colorCode, colorCode, colorCode);
 
-			triangle(image, screen_coords[j][0], screen_coords[j][1], screen_coords[j][2],
-				screen_coords[(j+1)%3][0], screen_coords[(j+1)%3][1], screen_coords[(j+1)%3][2],
-				screen_coords[(j+2)%3][0], screen_coords[(j+2)%3][1], screen_coords[(j+2)%3][2],
+			triangle(image, screen_coords[0][0], screen_coords[0][1], screen_coords[0][2],
+				screen_coords[1][0], screen_coords[1][1], screen_coords[1][2],
+				screen_coords[2][0], screen_coords[2][1], screen_coords[2][2],
 				randColor, zBuffer); 
 		}
 
