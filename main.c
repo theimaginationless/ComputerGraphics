@@ -82,7 +82,7 @@ void swapf(double *a, double *b) {
 
 void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 								int x2, int y2, int z2,
-								tgaColor color, int *zBuffer) {
+								tgaColor color, Vec3 uv0, Vec3 uv1, Vec3 uv2, Model *model, int *zBuffer) {
 	if((y0 == y1) && (y0 == y2)) {
 		return;
 	}
@@ -91,18 +91,30 @@ void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1
 		swap(&y0, &y1);
 		swap(&x0, &x1);
 		swap(&z0, &z1);
+
+		for(int i = 0; i < 2; i++) {
+			swapf(&uv0[i], &uv1[i]);
+		}
 	}
 
 	if(y0 > y2) {
 		swap(&y0, &y2);
 		swap(&x0, &x2);
 		swap(&z0, &z2);
+
+		for(int i = 0; i < 2; i++) {
+			swapf(&uv0[i], &uv2[i]);
+		}
 	}
 	
 	if(y1 > y2) {
 		swap(&y1, &y2);
 		swap(&x1, &x2);
 		swap(&z1, &z2);
+
+		for(int i = 0; i < 2; i++) {
+			swapf(&uv1[i], &uv2[i]);
+		}
 	}
 
 	int totalHeight = y2-y0;
@@ -119,9 +131,19 @@ void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1
 			B[1] = y0 + ((y1 - y0)*beta);
 			B[2] = z0 + ((z1 - z0)*beta);
 		}
+
+        Vec3 uvA = {uv0[0] + (uv2[0] - uv0[0])*alpha, uv0[1] + (uv2[1] - uv0[1])*alpha};
+        Vec3 uvB = {uv0[0] + (uv1[0] - uv0[0])*beta, uv0[1] + (uv1[1] - uv0[1])*beta};
+
+        if(secondHalf) {
+        	for(int i = 0; i < 2; i++) {
+        		uvB[i] = uv1[i] + (uv2[i] - uv1[i])*beta;
+        	}
+        }
 		if(A[0] > B[0]) {
 			for(int i = 0; i < 3; i++) {
 				swap(&A[i], &B[i]);
+				swapf(&uvA[i], &uvB[i]);
 			}
 		}
 
@@ -135,6 +157,9 @@ void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1
 				#ifdef DEBUG
 				printf("SET PIXEL X = %d; Y = %d; Z = %d\n", j, i, P[2]);
 				#endif
+
+				Vec3 uvP = {uvA[0] + (uvB[0] - uvA[0])*phi, uvA[1] + (uvB[1] - uvA[1])*phi};
+				color = getDiffuseColor(model, &uvP);
 
 				tgaSetPixel(image, P[0], P[1], color);
 			}
@@ -380,7 +405,12 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			triangle(image, screen_coords[0][0], screen_coords[0][1], screen_coords[0][2],
 				screen_coords[1][0], screen_coords[1][1], screen_coords[1][2],
 				screen_coords[2][0], screen_coords[2][1], screen_coords[2][2],
-				randColor, zBuffer); 
+				randColor, zBuffer);
+			/*newTriangle(image, screen_coords[0][0], screen_coords[0][1], screen_coords[0][2],
+				screen_coords[1][0], screen_coords[1][1], screen_coords[1][2],
+				screen_coords[2][0], screen_coords[2][1], screen_coords[2][2],
+				randColor, *uv[0], *uv[1], *uv[2], model, zBuffer);
+			*/
 		}
 
 	}
@@ -404,6 +434,8 @@ int main(int argc, char **argv)
 		scaleModel(model, strtod(argv[3], NULL));
 		model = offsetModel(model, strtod(argv[4], NULL), strtod(argv[5], NULL), strtod(argv[6], NULL));
 	}
+
+	loadDiffuseMap(model, "obj/cat_diff.tga");
 
 	meshgrid(image, model, argv[2]);
 
