@@ -533,10 +533,12 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 
 	Matrix44 ViewPort;
 	viewport(WIDTH/8, HEIGHT/8, WIDTH*3/4, HEIGHT*3/4, &ViewPort);
+	#ifdef DEBUG
 	printf("ViewPort:\n");
 			for(int i = 0; i < 4; i++) {
 				printf("%f %f %f %f\n", ViewPort.m[i][0], ViewPort.m[i][1], ViewPort.m[i][2], ViewPort.m[i][3]);
 			}
+	#endif
 	Projection.m[3][2] = -1.f/norm(&eye_minus_center);
 
 	for(int i = 0; i < WIDTH*HEIGHT; i++) {
@@ -552,17 +554,21 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			screen_coords[j][1] = round((1 - (*v)[1]) * image->height / 2);
 			screen_coords[j][2] = round((1 - (*v)[2]) * DEPTH/2);*/
 			Vec3 vertices_vec = {(*v)[0], (*v)[1], (*v)[2]};
+			#ifdef DEBUG
 			printf("vertices_vec %f %f %f\n", vertices_vec[0], vertices_vec[1], vertices_vec[2]);
+			#endif
 
 
 
 
 			Matrix44 finally_screen_coords_pre;
 			mulMatrix44x44(&finally_screen_coords_pre, &ViewPort, &Projection);
+			#ifdef DEBUG
 			printf("finally_screen_coords_4x4matrix:\n");
 			for(int i = 0; i < 4; i++) {
 				printf("%f %f %f %f\n", finally_screen_coords_pre.m[i][0], finally_screen_coords_pre.m[i][1], finally_screen_coords_pre.m[i][2], finally_screen_coords_pre.m[i][3]);
 			}
+			#endif
 
 			Matrix44 finally_screen_coords;
 			mulMatrix44x44(&finally_screen_coords, &finally_screen_coords_pre, &ModelView);
@@ -579,15 +585,19 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 					vertices_matrix.m[i][0] = 1.f;
 				}
 			}
+			#ifdef DEBUG
 			printf("vertices_matrix:\n");
 			for(int i = 0; i < 4; i++) {
 				printf("%f\n", vertices_matrix.m[i][0]);
 			}
+			#endif
 			mulMatrix44x41(&finally_screen_coords_final, &finally_screen_coords, &vertices_matrix);
+			#ifdef DEBUG
 			printf("finally_screen_coords_final4x1:\n");
 			for(int i = 0; i < 4; i++) {
 				printf("%f\n", finally_screen_coords_final.m[i][0]);
 			}
+			#endif
 
 			Vec3 finalVecEnd;
 			m412v(&finalVecEnd, &finally_screen_coords_final);
@@ -595,27 +605,25 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			finalVecEnd[1] = finally_screen_coords_final.m[1][0]/finally_screen_coords_final.m[3][0];
 			finalVecEnd[2] = finally_screen_coords_final.m[2][0]/finally_screen_coords_final.m[3][0];
 
+			#ifdef DEBUG
 			printf("finalVecEnd:\n");
 			for(int i = 0; i < 3; i++) {
 				printf("%f\n", finalVecEnd[i]);
 			}
-
+			#endif
 
 			Matrix44 test;
 			Matrix44 testres;
 			initMatrixIdentity(&test);
 			mulMatrix44x44(&testres, &test, &test);
 
-
-
-
-
-
 			screen_coords[j][0] = round(finalVecEnd[0]);
 			screen_coords[j][1] = round(finalVecEnd[1]);
 			screen_coords[j][2] = round(finalVecEnd[2]);
+			#ifdef DEBUG
 			printf("COORDS %f %f %f\n", finalVecEnd[0], finalVecEnd[1], finalVecEnd[2]);
 			printf("COORDS SCREEN %d %d %d\n", screen_coords[j][0], screen_coords[j][1], screen_coords[j][2]);
+			#endif
 
 			uv[j] = getDiffuseUV(model, i, j);
 		}
@@ -643,9 +651,11 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			#endif
 			tgaColor randColor = tgaRGB(colorCode, colorCode, colorCode);
 
+			#ifdef DEBUG
 			for(int j = 0; j < 3; j++) {
 				printf("COORDS SCREEN TRIANGLE j:%d: %d %d %d\n", j, screen_coords[j][0], screen_coords[j][1], screen_coords[j][2]);
 			}
+			#endif
 
 			triangle(image, screen_coords[0][0], screen_coords[0][1], screen_coords[0][2],
 				screen_coords[1][0], screen_coords[1][1], screen_coords[1][2],
@@ -657,7 +667,9 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 				randColor, *uv[0], *uv[1], *uv[2], model, zBuffer);*/
 			
 		}
+		#ifdef DEBUG
 		printf("debug END!!!!\n");
+		#endif
 
 	}
 }
