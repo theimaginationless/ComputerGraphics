@@ -29,6 +29,115 @@ void BRLine (tgaImage *image,
 		   int x1, int y1,
 		   tgaColor color);
 
+typedef struct {
+	double m[4][4];
+} Matrix44;
+
+typedef struct {
+	double m[4][1];
+} Matrix41;
+
+typedef struct {
+	double m[4][2];
+} Matrix42;
+
+void m442v(Vec3 *vector, Matrix44 *m) {
+	//Vec3 vector = {m.m[0][0]/m.m[3][0], m.m[1][0]/m.m[3][0], m.m[2][0]/m.m[3][0]};
+	*vector[0] = m->m[0][0]/m->m[3][0];
+	*vector[1] = m->m[1][0]/m->m[3][0];
+	*vector[2] = m->m[2][0]/m->m[3][0];
+}
+
+void m412v(Vec3 *vector, Matrix41 *m) {
+	//Vec3 vector = {m.m[0][0]/m.m[3][0], m.m[1][0]/m.m[3][0], m.m[2][0]/m.m[3][0]};
+	*vector[0] = m->m[0][0]/m->m[3][0];
+	*vector[1] = m->m[1][0]/m->m[3][0];
+	*vector[2] = m->m[2][0]/m->m[3][0];
+}
+
+
+void initMatrixIdentity(Matrix44 *matrix) {
+	for(int i = 0; i < 4; i++) {
+    	for(int j = 0; j < 4; j++) {
+    		if(i == j) {
+    			matrix->m[i][j] = 1;
+    		} else {
+    			matrix->m[i][j] = 0;
+    		}
+    	}
+    }
+}
+
+void v2m(Vec3 *vector, Matrix41 *m) {
+    m->m[0][0] = *vector[0];
+    m->m[1][0] = *vector[1];
+    m->m[2][0] = *vector[2];
+    m->m[3][0] = 1.f;
+}
+
+void viewport(int x, int y, int w, int h, Matrix44 *matrix) {
+    for(int i = 0; i < 4; i++) {
+    	for(int j = 0; j < 4; j++) {
+    		if(i == j) {
+    			matrix->m[i][j] = 1;
+    		} else {
+    			matrix->m[i][j] = 0;
+    		}
+    	}
+    }
+    matrix->m[0][3] = x+w/2.f;
+    matrix->m[1][3] = y+h/2.f;
+    matrix->m[2][3] = DEPTH/2.f;
+
+    matrix->m[0][0] = w/2.f;
+    matrix->m[1][1] = h/2.f;
+    matrix->m[2][2] = DEPTH/2.f;
+}
+
+void mulMatrix44x44(Matrix44 *distMatrix, Matrix44 *firstMatrix, Matrix44 *secondMatrix) {
+    for (int i=0; i<4; i++) {
+        for (int j=0; j<4; j++) {
+            distMatrix->m[i][j] = 0.f;
+            for (int k=0; k<4; k++) {
+                distMatrix->m[i][j] += firstMatrix->m[i][k]*secondMatrix->m[k][j];
+            }
+        }
+    }
+}
+
+void mulMatrix44x42(Matrix42 *distMatrix, Matrix44 *firstMatrix, Matrix42 *secondMatrix) {
+    for (int i=0; i<4; i++) {
+        for (int j=0; j<2; j++) {
+            distMatrix->m[i][j] = 0.f;
+            for (int k=0; k<4; k++) {
+                distMatrix->m[i][j] += firstMatrix->m[i][k]*secondMatrix->m[k][j];
+            }
+        }
+    }
+}
+
+void mulMatrix42x41(Matrix42 *distMatrix, Matrix44 *firstMatrix, Matrix42 *secondMatrix) {
+	for (int i=0; i<4; i++) {
+        for (int j=0; j<1; j++) {
+            distMatrix->m[i][j] = 0.f;
+            for (int k=0; k<2; k++) {
+                distMatrix->m[i][j] += firstMatrix->m[i][k]*secondMatrix->m[k][j];
+            }
+        }
+    }
+}
+
+void mulMatrix44x41(Matrix41 *distMatrix, Matrix44 *firstMatrix, Matrix41 *secondMatrix) {
+	for (int i=0; i<4; i++) {
+        for (int j=0; j<1; j++) {
+            distMatrix->m[i][j] = 0.f;
+            for (int k=0; k<4; k++) {
+                distMatrix->m[i][j] += firstMatrix->m[i][k]*secondMatrix->m[k][j];
+            }
+        }
+    }
+}
+
 Model *scaleModel(Model *model, double scale) {
 	for(unsigned i = 0; i < model->nvert; i++) {
 		for(unsigned j = 0; j < 3; j++) {
@@ -48,6 +157,7 @@ Model *offsetModel(Model *model, double x, double y, double z) {
 
 	return model;
 }
+
 
 double getZCoord(int x0, int y0, int z0,
 				int x1, int y1, int z1,
@@ -155,7 +265,7 @@ void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1
 			if(zBuffer[idx] < P[2]) {
 				zBuffer[idx] = P[2];
 				#ifdef DEBUG
-				printf("SET PIXEL X = %d; Y = %d; Z = %d\n", j, i, P[2]);
+				printf("SET PIXEL X = %d; Y = %d; Z = %f\n", j, i, P[2]);
 				#endif
 
 				Vec3 uvP = {uvA[0] + (uvB[0] - uvA[0])*phi, uvA[1] + (uvB[1] - uvA[1])*phi};
@@ -222,6 +332,10 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 			int idx = x + y * WIDTH;
 			int z = round(getZCoord(x0, y0, z0, x1, y1, z1, x2, y2, z2, x, y));
 
+			#ifdef DEBUG
+			printf("INDEX ZBUFFER: %d\n", idx);
+			#endif
+
 			if(zBuffer[idx] < z) {
 				zBuffer[idx] = z;
 				#ifdef DEBUG
@@ -278,6 +392,10 @@ void triangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1,
 
 			int idx = x + y * WIDTH;
 			int z = round(getZCoord(x0, y0, z0, x1, y1, z1, x2, y2, z2, x, y));
+
+			#ifdef DEBUG
+			printf("INDEX ZBUFFER: %d\n", idx);
+			#endif
 
 			if(zBuffer[idx] < z) {
 				zBuffer[idx] = z;
@@ -355,13 +473,71 @@ double getAngleNormal(Vec3 lightDirection, double x0, double y0, double z0,
 			return angle;
 		}
 
+void normalizeVec3(Vec3 vector) {
+	double fraction = 1/sqrt((vector)[0] * (vector)[0] + (vector)[1] * (vector)[1] + (vector)[2] * (vector)[2]);
+
+	for(int i = 0; i < 3; i++) {
+		vector[i] *= fraction;
+	}
+}
+
+double norm(Vec3 *vector) {
+	return sqrt((*vector[0]) * (*vector[0]) + (*vector[1]) * (*vector[1]) + (*vector[2]) * (*vector[2]));
+}
+
+void lookat(Matrix44 *ModelView, Vec3 eye, Vec3 center, Vec3 up) {
+    Vec3 z = {eye[0]-center[0], eye[1]-center[1], eye[2]-center[2]};
+    normalizeVec3(z);
+
+    Vec3 x = {up[1] * z[2] - up[2] * z[1], up[2] * z[0] - up[0] * z[2], up[0] * z[1] - up[1] * z[0]}; //Cross (up ^ z)
+    normalizeVec3(x);
+
+    Vec3 y = {z[1] * x[2] - z[2] * x[1], z[2]  *x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]}; //Cross (z ^ x)
+    normalizeVec3(y);
+
+    Matrix44 Minv;
+    initMatrixIdentity(&Minv);
+
+    Matrix44 Tr;
+    initMatrixIdentity(&Tr);
+    for (int i=0; i<3; i++) {
+        Minv.m[0][i] = x[i];
+        Minv.m[1][i] = y[i];
+        Minv.m[2][i] = z[i];
+        Tr.m[i][3] = -center[i];
+    }
+
+    mulMatrix44x44(ModelView, &Minv, &Tr);
+
+}
 void meshgrid(tgaImage *image, Model *model, char *argv) {
 	double lightIntensity = 1;
 	double color = 255;
 	Vec3 lightDirection = {0, 0, 1};
+	//Vec3 eye = {1, 0, 2};
+	//Vec3 center = {1.5, 0, 2.5}; //rotated
+	Vec3 eye = {0.5, 0.2, 2};
+	Vec3 center = {0.5, 0.2, 2.5};
+	Vec3 up = {0, 4, 1};
+	Vec3 eye_minus_center = {eye[0]-center[0], eye[1]-center[1], eye[2]-center[2]};
+	normalizeVec3(eye_minus_center);
+	Matrix44 ModelView;
+	initMatrixIdentity(&ModelView);
+	lookat(&ModelView, eye, center, up);
 	Vec3 *vertices[3];
 	int zBuffer[HEIGHT * WIDTH];
 	Vec3 *uv[3];
+
+	Matrix44 Projection;
+	initMatrixIdentity(&Projection);
+
+	Matrix44 ViewPort;
+	viewport(WIDTH/8, HEIGHT/8, WIDTH*3/4, HEIGHT*3/4, &ViewPort);
+	printf("ViewPort:\n");
+			for(int i = 0; i < 4; i++) {
+				printf("%f %f %f %f\n", ViewPort.m[i][0], ViewPort.m[i][1], ViewPort.m[i][2], ViewPort.m[i][3]);
+			}
+	Projection.m[3][2] = -1.f/norm(&eye_minus_center);
 
 	for(int i = 0; i < WIDTH*HEIGHT; i++) {
 		zBuffer[i] = INT_MIN;
@@ -372,9 +548,74 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 		for (unsigned j = 0; j < 3; ++j) {
 			Vec3 *v = &(model->vertices[model->faces[i][3*j]]);
 			vertices[j] = &(model->vertices[model->faces[i][3*j]]);
-			screen_coords[j][0] = round(((*v)[0] + 1) * image->width / 2);
+			/*screen_coords[j][0] = round(((*v)[0] + 1) * image->width / 2);
 			screen_coords[j][1] = round((1 - (*v)[1]) * image->height / 2);
-			screen_coords[j][2] = round((1 - (*v)[2]) * DEPTH/2);
+			screen_coords[j][2] = round((1 - (*v)[2]) * DEPTH/2);*/
+			Vec3 vertices_vec = {(*v)[0], (*v)[1], (*v)[2]};
+			printf("vertices_vec %f %f %f\n", vertices_vec[0], vertices_vec[1], vertices_vec[2]);
+
+
+
+
+			Matrix44 finally_screen_coords_pre;
+			mulMatrix44x44(&finally_screen_coords_pre, &ViewPort, &Projection);
+			printf("finally_screen_coords_4x4matrix:\n");
+			for(int i = 0; i < 4; i++) {
+				printf("%f %f %f %f\n", finally_screen_coords_pre.m[i][0], finally_screen_coords_pre.m[i][1], finally_screen_coords_pre.m[i][2], finally_screen_coords_pre.m[i][3]);
+			}
+
+			Matrix44 finally_screen_coords;
+			mulMatrix44x44(&finally_screen_coords, &finally_screen_coords_pre, &ModelView);
+
+
+
+			Matrix41 finally_screen_coords_final;
+			Matrix41 vertices_matrix;
+			v2m(&vertices_vec, &vertices_matrix);
+			for(int i = 0; i < 4; i++) {
+				if(i < 3) {
+					vertices_matrix.m[i][0] = vertices_vec[i];
+				} else {
+					vertices_matrix.m[i][0] = 1.f;
+				}
+			}
+			printf("vertices_matrix:\n");
+			for(int i = 0; i < 4; i++) {
+				printf("%f\n", vertices_matrix.m[i][0]);
+			}
+			mulMatrix44x41(&finally_screen_coords_final, &finally_screen_coords, &vertices_matrix);
+			printf("finally_screen_coords_final4x1:\n");
+			for(int i = 0; i < 4; i++) {
+				printf("%f\n", finally_screen_coords_final.m[i][0]);
+			}
+
+			Vec3 finalVecEnd;
+			m412v(&finalVecEnd, &finally_screen_coords_final);
+			finalVecEnd[0] = finally_screen_coords_final.m[0][0]/finally_screen_coords_final.m[3][0];
+			finalVecEnd[1] = finally_screen_coords_final.m[1][0]/finally_screen_coords_final.m[3][0];
+			finalVecEnd[2] = finally_screen_coords_final.m[2][0]/finally_screen_coords_final.m[3][0];
+
+			printf("finalVecEnd:\n");
+			for(int i = 0; i < 3; i++) {
+				printf("%f\n", finalVecEnd[i]);
+			}
+
+
+			Matrix44 test;
+			Matrix44 testres;
+			initMatrixIdentity(&test);
+			mulMatrix44x44(&testres, &test, &test);
+
+
+
+
+
+
+			screen_coords[j][0] = round(finalVecEnd[0]);
+			screen_coords[j][1] = round(finalVecEnd[1]);
+			screen_coords[j][2] = round(finalVecEnd[2]);
+			printf("COORDS %f %f %f\n", finalVecEnd[0], finalVecEnd[1], finalVecEnd[2]);
+			printf("COORDS SCREEN %d %d %d\n", screen_coords[j][0], screen_coords[j][1], screen_coords[j][2]);
 
 			uv[j] = getDiffuseUV(model, i, j);
 		}
@@ -402,6 +643,10 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			#endif
 			tgaColor randColor = tgaRGB(colorCode, colorCode, colorCode);
 
+			for(int j = 0; j < 3; j++) {
+				printf("COORDS SCREEN TRIANGLE j:%d: %d %d %d\n", j, screen_coords[j][0], screen_coords[j][1], screen_coords[j][2]);
+			}
+
 			triangle(image, screen_coords[0][0], screen_coords[0][1], screen_coords[0][2],
 				screen_coords[1][0], screen_coords[1][1], screen_coords[1][2],
 				screen_coords[2][0], screen_coords[2][1], screen_coords[2][2],
@@ -409,9 +654,10 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			/*newTriangle(image, screen_coords[0][0], screen_coords[0][1], screen_coords[0][2],
 				screen_coords[1][0], screen_coords[1][1], screen_coords[1][2],
 				screen_coords[2][0], screen_coords[2][1], screen_coords[2][2],
-				randColor, *uv[0], *uv[1], *uv[2], model, zBuffer);
-			*/
+				randColor, *uv[0], *uv[1], *uv[2], model, zBuffer);*/
+			
 		}
+		printf("debug END!!!!\n");
 
 	}
 }
