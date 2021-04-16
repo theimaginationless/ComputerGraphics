@@ -57,8 +57,8 @@ void m412v(Vec3 *vector, Matrix41 *m) {
 
 
 void initMatrixIdentity(Matrix44 *matrix) {
-	for(int i = 0; i < 4; i++) {
-    	for(int j = 0; j < 4; j++) {
+	for(int i = 0; i < 4; ++i) {
+    	for(int j = 0; j < 4; ++j) {
     		if(i == j) {
     			matrix->m[i][j] = 1;
     		} else {
@@ -76,8 +76,8 @@ void v2m(Vec3 *vector, Matrix41 *m) {
 }
 
 void viewport(int x, int y, int w, int h, Matrix44 *matrix) {
-    for(int i = 0; i < 4; i++) {
-    	for(int j = 0; j < 4; j++) {
+    for(int i = 0; i < 4; ++i) {
+    	for(int j = 0; j < 4; ++j) {
     		if(i == j) {
     			matrix->m[i][j] = 1;
     		} else {
@@ -95,8 +95,8 @@ void viewport(int x, int y, int w, int h, Matrix44 *matrix) {
 }
 
 void mulMatrix44x44(Matrix44 *distMatrix, Matrix44 *firstMatrix, Matrix44 *secondMatrix) {
-    for (int i=0; i<4; i++) {
-        for (int j=0; j<4; j++) {
+    for (int i=0; i<4; ++i) {
+        for (int j=0; j<4; ++j) {
             distMatrix->m[i][j] = 0.f;
             for (int k=0; k<4; k++) {
                 distMatrix->m[i][j] += firstMatrix->m[i][k]*secondMatrix->m[k][j];
@@ -106,8 +106,8 @@ void mulMatrix44x44(Matrix44 *distMatrix, Matrix44 *firstMatrix, Matrix44 *secon
 }
 
 void mulMatrix44x42(Matrix42 *distMatrix, Matrix44 *firstMatrix, Matrix42 *secondMatrix) {
-    for (int i=0; i<4; i++) {
-        for (int j=0; j<2; j++) {
+    for (int i=0; i<4; ++i) {
+        for (int j=0; j<2; ++j) {
             distMatrix->m[i][j] = 0.f;
             for (int k=0; k<4; k++) {
                 distMatrix->m[i][j] += firstMatrix->m[i][k]*secondMatrix->m[k][j];
@@ -117,8 +117,8 @@ void mulMatrix44x42(Matrix42 *distMatrix, Matrix44 *firstMatrix, Matrix42 *secon
 }
 
 void mulMatrix42x41(Matrix42 *distMatrix, Matrix44 *firstMatrix, Matrix42 *secondMatrix) {
-	for (int i=0; i<4; i++) {
-        for (int j=0; j<1; j++) {
+	for (int i=0; i<4; ++i) {
+        for (int j=0; j<1; ++j) {
             distMatrix->m[i][j] = 0.f;
             for (int k=0; k<2; k++) {
                 distMatrix->m[i][j] += firstMatrix->m[i][k]*secondMatrix->m[k][j];
@@ -128,8 +128,8 @@ void mulMatrix42x41(Matrix42 *distMatrix, Matrix44 *firstMatrix, Matrix42 *secon
 }
 
 void mulMatrix44x41(Matrix41 *distMatrix, Matrix44 *firstMatrix, Matrix41 *secondMatrix) {
-	for (int i=0; i<4; i++) {
-        for (int j=0; j<1; j++) {
+	for (int i=0; i<4; ++i) {
+        for (int j=0; j<1; ++j) {
             distMatrix->m[i][j] = 0.f;
             for (int k=0; k<4; k++) {
                 distMatrix->m[i][j] += firstMatrix->m[i][k]*secondMatrix->m[k][j];
@@ -139,8 +139,8 @@ void mulMatrix44x41(Matrix41 *distMatrix, Matrix44 *firstMatrix, Matrix41 *secon
 }
 
 Model *scaleModel(Model *model, double scale) {
-	for(unsigned i = 0; i < model->nvert; i++) {
-		for(unsigned j = 0; j < 3; j++) {
+	for(unsigned i = 0; i < model->nvert; ++i) {
+		for(unsigned j = 0; j < 3; ++j) {
 			(model->vertices[i])[j] = (model->vertices[i])[j] * scale;
 		}
 	}
@@ -149,7 +149,7 @@ Model *scaleModel(Model *model, double scale) {
 }
 
 Model *offsetModel(Model *model, double x, double y, double z) {
-	for(unsigned i = 0; i < model->nvert; i++) {
+	for(unsigned i = 0; i < model->nvert; ++i) {
 		(model->vertices[i])[0] += x;
 		(model->vertices[i])[1] += y;
 		(model->vertices[i])[2] += z;
@@ -202,7 +202,7 @@ void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1
 		swap(&x0, &x1);
 		swap(&z0, &z1);
 
-		for(int i = 0; i < 2; i++) {
+		for(int i = 0; i < 2; ++i) {
 			swapf(&uv0[i], &uv1[i]);
 		}
 	}
@@ -212,7 +212,7 @@ void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1
 		swap(&x0, &x2);
 		swap(&z0, &z2);
 
-		for(int i = 0; i < 2; i++) {
+		for(int i = 0; i < 2; ++i) {
 			swapf(&uv0[i], &uv2[i]);
 		}
 	}
@@ -222,13 +222,13 @@ void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1
 		swap(&x1, &x2);
 		swap(&z1, &z2);
 
-		for(int i = 0; i < 2; i++) {
+		for(int i = 0; i < 2; ++i) {
 			swapf(&uv1[i], &uv2[i]);
 		}
 	}
 
 	int totalHeight = y2-y0;
-	for(int i = 0; i < totalHeight; i++) {
+	for(int i = 0; i < totalHeight; ++i) {
 		int secondHalf = i > y1-y0 || y1 == y0;
 		int segmentHeight = secondHalf ? y2-y1 : y1-y0;
 		double alpha = (double)i/totalHeight;
@@ -246,18 +246,18 @@ void newTriangle(tgaImage *image, int x0, int y0, int z0, int x1, int y1, int z1
         Vec3 uvB = {uv0[0] + (uv1[0] - uv0[0])*beta, uv0[1] + (uv1[1] - uv0[1])*beta};
 
         if(secondHalf) {
-        	for(int i = 0; i < 2; i++) {
+        	for(int i = 0; i < 2; ++i) {
         		uvB[i] = uv1[i] + (uv2[i] - uv1[i])*beta;
         	}
         }
 		if(A[0] > B[0]) {
-			for(int i = 0; i < 3; i++) {
+			for(int i = 0; i < 3; ++i) {
 				swap(&A[i], &B[i]);
 				swapf(&uvA[i], &uvB[i]);
 			}
 		}
 
-		for(int j = A[0]; j <=B[0]; j++) {
+		for(int j = A[0]; j <=B[0]; ++j) {
 			double phi = B[0]==A[0] ? 1. : (double)(j-A[0])/(double)(B[0]-A[0]);
 			Vec3 P = {A[0] + ((B[0] - A[0])*phi), A[1] + ((B[1] - A[1])*phi), A[2] + ((B[2] - A[2])*phi)};
 			int idx = P[0] + P[1] * WIDTH;
@@ -423,7 +423,7 @@ double newgetAngleNormal(Vec3 lightDirection, double x0, double y0, double z0,
 				wc1[0]*wc2[1] - wc1[1]*wc2[0]};
 
 			// normalize
-			//for(int i = 0; i < 3; i++) {
+			//for(int i = 0; i < 3; ++i) {
 			//	result[i] /= sqrt(result[0]*result[0] + result[1]*result[1] + result[2]*result[2]);
 			//}
 			double fracA = sqrt(result[0] * result[0] + result[1] * result[1] + result[2] * result[2]);
@@ -476,7 +476,7 @@ double getAngleNormal(Vec3 lightDirection, double x0, double y0, double z0,
 void normalizeVec3(Vec3 vector) {
 	double fraction = 1/sqrt((vector)[0] * (vector)[0] + (vector)[1] * (vector)[1] + (vector)[2] * (vector)[2]);
 
-	for(int i = 0; i < 3; i++) {
+	for(int i = 0; i < 3; ++i) {
 		vector[i] *= fraction;
 	}
 }
@@ -500,7 +500,7 @@ void lookat(Matrix44 *ModelView, Vec3 eye, Vec3 center, Vec3 up) {
 
     Matrix44 Tr;
     initMatrixIdentity(&Tr);
-    for (int i=0; i<3; i++) {
+    for (int i=0; i<3; ++i) {
         Minv.m[0][i] = x[i];
         Minv.m[1][i] = y[i];
         Minv.m[2][i] = z[i];
@@ -533,13 +533,13 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 	viewport(WIDTH/8, HEIGHT/8, WIDTH*3/4, HEIGHT*3/4, &ViewPort);
 	#ifdef DEBUG
 	printf("ViewPort:\n");
-			for(int i = 0; i < 4; i++) {
+			for(int i = 0; i < 4; ++i) {
 				printf("%f %f %f %f\n", ViewPort.m[i][0], ViewPort.m[i][1], ViewPort.m[i][2], ViewPort.m[i][3]);
 			}
 	#endif
 	Projection.m[3][2] = -1.f/norm(&eye_minus_center);
 
-	for(int i = 0; i < WIDTH*HEIGHT; i++) {
+	for(int i = 0; i < WIDTH*HEIGHT; ++i) {
 		zBuffer[i] = INT_MIN;
 	}
 
@@ -562,7 +562,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 
 			#ifdef DEBUG
 			printf("finally_screen_coords_4x4matrix:\n");
-			for(int i = 0; i < 4; i++) {
+			for(int i = 0; i < 4; ++i) {
 				printf("%f %f %f %f\n", finally_screen_coords_pre.m[i][0], finally_screen_coords_pre.m[i][1], finally_screen_coords_pre.m[i][2], finally_screen_coords_pre.m[i][3]);
 			}
 			#endif
@@ -572,7 +572,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			Matrix41 finally_screen_coords_final;
 			Matrix41 vertices_matrix;
 			v2m(&vertices_vec, &vertices_matrix);
-			for(int i = 0; i < 4; i++) {
+			for(int i = 0; i < 4; ++i) {
 				if(i < 3) {
 					vertices_matrix.m[i][0] = vertices_vec[i];
 				} else {
@@ -582,7 +582,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 
 			#ifdef DEBUG
 			printf("vertices_matrix:\n");
-			for(int i = 0; i < 4; i++) {
+			for(int i = 0; i < 4; ++i) {
 				printf("%f\n", vertices_matrix.m[i][0]);
 			}
 			#endif
@@ -591,7 +591,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 
 			#ifdef DEBUG
 			printf("finally_screen_coords_final4x1:\n");
-			for(int i = 0; i < 4; i++) {
+			for(int i = 0; i < 4; ++i) {
 				printf("%f\n", finally_screen_coords_final.m[i][0]);
 			}
 			#endif
@@ -604,7 +604,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 
 			#ifdef DEBUG
 			printf("finalVecEnd:\n");
-			for(int i = 0; i < 3; i++) {
+			for(int i = 0; i < 3; ++i) {
 				printf("%f\n", finalVecEnd[i]);
 			}
 			#endif
@@ -649,7 +649,7 @@ void meshgrid(tgaImage *image, Model *model, char *argv) {
 			tgaColor randColor = tgaRGB(colorCode, colorCode, colorCode);
 
 			#ifdef DEBUG
-			for(int j = 0; j < 3; j++) {
+			for(int j = 0; j < 3; ++j) {
 				printf("COORDS SCREEN TRIANGLE j:%d: %d %d %d\n", j, screen_coords[j][0], screen_coords[j][1], screen_coords[j][2]);
 			}
 			#endif
